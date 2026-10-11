@@ -30,7 +30,7 @@ function applyLanguage(language){
   if(key==="amp"||key==="detail"||key==="speed"){const output=el.querySelector("output");el.replaceChildren(document.createTextNode(t(key)+" "),output)}
   else el.textContent=t(key);
  }
- const hint=document.querySelector("#layers")?.previousElementSibling;
+ const hint=document.querySelector(".panel:first-child h2:nth-of-type(2) + p");
  if(hint?.tagName==="P")hint.textContent=t("layerHint");
  const head=document.querySelector(".layer-head");
  if(head){const spans=head.querySelectorAll("span");if(spans[1])spans[1].textContent=t("type");if(spans[2])spans[2].textContent=t("color")}
