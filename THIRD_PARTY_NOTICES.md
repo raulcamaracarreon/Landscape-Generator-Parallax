@@ -19,3 +19,20 @@ Qt LGPL compliance reference: https://www.qt.io/faq/qt-open-source-licensing
 - PyInstaller: GPL with an exception for distributing frozen applications — https://pyinstaller.org/en/stable/license.html
 
 **Before public distribution:** Verify the real content of the built ZIP, exact Qt/PySide versions, full license texts, library replacement, and corresponding source / written offer arrangements. If these cannot be completed, do not publish the Windows binary; the MIT-licensed source and standalone web version are still distributable.
+
+## Publication status (v1.0.0)
+
+The **web application can be publicly released under MIT**. The Windows archive is currently made available as a build artifact for verification, but **is deliberately not attached to automated public GitHub Releases** until the following steps are demonstrably completed:
+
+1. Identify the exact versions and license of each Qt/PySide6/Shiboken DLL/plugin bundled by the Windows workflow. Check `DEPENDENCY_VERSIONS.txt` created during packaging and inspect the generated `_internal/PySide6/Qt/` directories.
+2. Supply the **complete corresponding source** for the distributed LGPL components, under the distributor's own control (or a legally sufficient written offer), including modifications and applicable build scripts. A bare link to Qt's site does not satisfy Qt's stated guidance.
+3. Verify and document the procedure for replacing LGPL shared libraries and plugins with modified, binary-compatible builds, and confirm that the application continues to run.
+4. Include all appropriate copyright/license notices for the **actual** packaged components; consider third-party Qt plugins and libraries as well as NumPy, Python and PyInstaller.
+5. Document the installation information required under LGPLv3, insofar as applicable, and check for restrictions that could prevent using a modified library.
+
+The open-source Qt references are:
+- https://www.qt.io/development/open-source-lgpl-obligations
+- https://www.qt.io/faq/qt-open-source-licensing
+- https://doc.qt.io/qtforpython-6/
+
+This checklist is engineering guidance, **not a legal compliance certification**. Consult a qualified attorney if uncertainty remains.
