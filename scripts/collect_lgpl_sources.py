@@ -7,11 +7,23 @@ root=Path("release/Desktop/LGPL_SOURCE");root.mkdir(parents=True,exist_ok=True)
 qt_version=version("PySide6_Essentials")
 if version("shiboken6")!=qt_version or version("PySide6")!=qt_version:
     raise SystemExit("Qt for Python component versions differ; inspect manually")
+# Identify the Qt modules actually bundled, not just the pip packages.
+bundled={p.name.lower() for p in Path("release/Desktop").rglob("Qt6*.dll")}
+modules={"qtbase"}
+prefix_map={"qt6svg":"qtsvg","qt6qml":"qtdeclarative","qt6quick":"qtdeclarative","qt6shader":"qtshadertools","qt6multimedia":"qtmultimedia","qt6websockets":"qtwebsockets","qt6serialport":"qtserialport","qt6positioning":"qtpositioning","qt6charts":"qtcharts"}
+core=("qt6core","qt6gui","qt6widgets","qt6network","qt6opengl","qt6printsupport","qt6test","qt6sql","qt6xml","qt6dbus","qt6concurrent")
+unknown=[]
+for dll in bundled:
+    if dll.startswith(core):continue
+    matches=[module for prefix,module in prefix_map.items() if dll.startswith(prefix)]
+    if not matches:unknown.append(dll)
+    else:modules.update(matches)
+if unknown:raise SystemExit("STOP: Unmapped Qt DLLs: "+", ".join(sorted(unknown)))
 archives={
-    "qtbase":f"https://github.com/qt/qtbase/archive/refs/tags/v{qt_version}.tar.gz",
+    **{name:f"https://github.com/qt/{name}/archive/refs/tags/v{qt_version}.tar.gz" for name in sorted(modules)},
     "pyside-setup":f"https://github.com/qt/pyside-setup/archive/refs/tags/v{qt_version}.tar.gz",
 }
-manifest={"Qt_PySide_version":qt_version,"sources":[],"notes":"QtBase and Qt for Python source snapshots. Other bundled Qt modules require separate coverage if present."}
+manifest={"Qt_PySide_version":qt_version,"bundled_qt_dlls":sorted(bundled),"qt_source_modules":sorted(modules),"sources":[],"notes":"Inspect bundled plugins and third-party libraries separately before certifying compliance."}
 for name,url in archives.items():
     dest=root/(name+"-"+qt_version+".tar.gz")
     print("Fetching",url,flush=True)
