@@ -72,7 +72,7 @@ Raúl Cámara Carreón · https://github.com/raulcamaracarreon
 
 ## Licensing
 
-No project-level license selected yet. Public repository visibility does not automatically authorize redistribution or modification. Review PySide6 (Qt/LGPL) and NumPy dependencies and their licenses before releasing packaged binaries.
+The project source code is licensed under the **[MIT License](LICENSE)** © 2026 Raúl Héctor Cámara Carreón. Third-party dependencies retain their own licenses; in particular, review PySide6/Qt's LGPLv3 compliance requirements for redistributed Windows binaries (including license notices and permitted replacement or relinking of the LGPL-covered components). NumPy and packaging dependencies also retain their respective licenses.
 
 ## Web version (HTML + Canvas)
 
