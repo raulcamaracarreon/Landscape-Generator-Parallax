@@ -28,9 +28,9 @@ Two independent packages are produced by the [Windows packaging workflow](.githu
 
 **[View GitHub Releases / Ver versiones y descargas](https://github.com/raulcamaracarreon/Landscape-Generator-Parallax/releases)**
 
-For the Windows binaries, follow the [Qt LGPLv3 compliance checklist](THIRD_PARTY_NOTICES.md). The workflow now uses PyInstaller `--onedir`, not `--onefile`, and includes available license notices. Before an official binary release, verify the replacement/relinking mechanism and corresponding Qt source availability.\n\nTo build the ZIP archives, open **Actions → Package Desktop and Web → Run workflow**. The resulting packages appear in that run's Artifacts section. To publish downloadable release assets, create and push a version tag such as `v1.0.0`; the workflow packages both editions and publishes the ZIP files as release assets after the build succeeds.
+For Windows binaries, follow the [Qt LGPLv3 compliance checklist](THIRD_PARTY_NOTICES.md). The workflow uses PyInstaller `--onedir` and records exact dependency versions in `DEPENDENCY_VERSIONS.txt`. **Until the LGPL review is completed, tagged GitHub Releases publish only the portable Web ZIP and MIT-licensed source.** Windows binaries remain workflow artifacts for verification and are not yet approved for public distribution.\n\nTo build the archives, open **Actions → Package Desktop and Web → Run workflow**. A version tag such as `v1.0.0` triggers automatic packaging and a Web-only Release after the build succeeds.
 
-**Build status:** The workflow has been configured but the Windows binaries are not yet verified. A GitHub Release will not appear until a successful tagged run completes.
+**Build status:** The Windows `--onedir` package was successfully built and functionally verified on October 10, 2026. The remaining desktop release blocker is the LGPL compliance checklist; functional tests are not legal certification.
 
 ## Run from source
 
@@ -58,7 +58,7 @@ The previous project folder was lost. This repository is a **reconstruction base
 
 ## Build for Windows
 
-The source launcher can run alongside source scripts. For a binary distribution, build the ten language-specific entry points and place their `.exe` files alongside the compiled launcher. Build launcher with:
+The source launcher can run alongside source scripts. For a Windows binary distribution, build each language-specific entry point in `--onedir` mode under `apps/<language>/`, then build the launcher with:
 
 ```powershell
 python -m PyInstaller --onedir --windowed launcher.py
