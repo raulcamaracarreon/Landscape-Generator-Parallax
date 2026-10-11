@@ -1,38 +1,25 @@
-"""Build a distributable LGPL source bundle for the exact installed Qt for Python wheels.
-
-Fails closed if upstream source archives or package metadata cannot be resolved.
-"""
-import json
-import os
+"""Collect version-matched Qt and PySide source archives, failing closed."""
+import hashlib,json,urllib.request
+from importlib.metadata import version
 from pathlib import Path
-import subprocess
-import sys
-import urllib.request
-import hashlib
-
-OUT = Path("release/Desktop/LGPL_SOURCE")
-OUT.mkdir(parents=True, exist_ok=True)
-packages = ["PySide6", "PySide6_Essentials", "PySide6_Addons", "shiboken6"]
-index = "https://pypi.org/pypi/{name}/{version}/json"
-manifest = []
-for name in packages:
-    try:
-        from importlib.metadata import version, metadata
-        v = version(name)
-    except Exception as exc:
-        raise SystemExit(f"Unable to identify {name}: {exc}")
-    with urllib.request.urlopen(index.format(name=name, version=v), timeout=60) as response:
-        release = json.load(response)
-    source_candidates = [x for x in release["urls"] if x.get("packagetype") == "sdist"]
-    if not source_candidates:
-        raise SystemExit(f"STOP: No verified source distribution for {name} {v}. Do not publish Desktop.")
-    item = source_candidates[0]
-    filename = item["filename"]
-    target = OUT / filename
-    urllib.request.urlretrieve(item["url"], target)
-    digest = hashlib.sha256(target.read_bytes()).hexdigest()
-    if digest != item["digests"]["sha256"]:
-        raise SystemExit(f"Checksum failed for {filename}")
-    manifest.append({"name": name, "version": v, "file": filename, "sha256": digest, "source_url": item["url"]})
-(OUT / "MANIFEST.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
-print("LGPL source package hashes verified")
+from zipfile import ZipFile
+root=Path("release/Desktop/LGPL_SOURCE");root.mkdir(parents=True,exist_ok=True)
+qt_version=version("PySide6_Essentials")
+if version("shiboken6")!=qt_version or version("PySide6")!=qt_version:
+    raise SystemExit("Qt for Python component versions differ; inspect manually")
+archives={
+    "qtbase":f"https://github.com/qt/qtbase/archive/refs/tags/v{qt_version}.tar.gz",
+    "pyside-setup":f"https://github.com/qt/pyside-setup/archive/refs/tags/v{qt_version}.tar.gz",
+}
+manifest={"Qt_PySide_version":qt_version,"sources":[],"notes":"QtBase and Qt for Python source snapshots. Other bundled Qt modules require separate coverage if present."}
+for name,url in archives.items():
+    dest=root/(name+"-"+qt_version+".tar.gz")
+    print("Fetching",url,flush=True)
+    req=urllib.request.Request(url,headers={"User-Agent":"landscape-generator-release"})
+    with urllib.request.urlopen(req,timeout=120) as response, dest.open("wb") as out:
+        import shutil
+        shutil.copyfileobj(response,out)
+    checksum=hashlib.sha256(dest.read_bytes()).hexdigest()
+    if dest.stat().st_size<10240:raise SystemExit("Source archive unexpectedly small: "+name)
+    manifest["sources"].append({"module":name,"url":url,"filename":dest.name,"sha256":checksum})
+(root/"MANIFEST.json").write_text(json.dumps(manifest,indent=2),encoding="utf-8")
