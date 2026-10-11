@@ -47,7 +47,7 @@ with ZipFile(desktop) as w, ZipFile(sources) as s:
     check(set(manifest["bundled_qt_dlls"]) == actual_qt_dlls, "All Qt6 DLL names accounted for by source manifest")
     check(str(manifest["Qt_PySide_version"]) == str(audit["Qt_version"]) == "6.11.0",
           "Same Qt version in source manifest and DLL audit")
-    packages = dict((a.lower().replace("_","-"),b) for a,b in re.findall(r"^([\\w.-]+)==([\\w.+-]+)",versions,re.M))
+    packages = dict((line.split("==",1)[0].strip().lower().replace("_","-"),line.split("==",1)[1].strip()) for line in versions.splitlines() if "==" in line)
     for name in ["pyside6-essentials","shiboken6"]:
         check(packages.get(name) == "6.11.0", f"Packaged {name} version is 6.11.0")
     modules = {p["module"] for p in manifest["sources"]}
