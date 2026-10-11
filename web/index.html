@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Generador de Paisajes Parallax</title>
+<style>
+:root{color-scheme:dark;--bg:#101824;--panel:#1a2635;--line:#34465a;--txt:#e9f2fd;--mut:#acbfd2;--accent:#62d7c5}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.45 system-ui,Segoe UI,sans-serif}
+header{padding:19px 24px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap}
+h1{font-size:23px;margin:0}h2{font-size:16px;margin:0 0 12px}p{margin:5px 0;color:var(--mut)}
+main{display:grid;grid-template-columns:minmax(315px,430px) 1fr;gap:18px;padding:18px;align-items:start}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:17px;min-width:0}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+label{font-size:12px;color:var(--mut)}input,select,button{font:inherit}input[type=number],input[type=text],select{width:100%;padding:9px;border:1px solid var(--line);background:#101b29;color:var(--txt);border-radius:7px}
+input[type=color]{height:37px;width:100%;border:1px solid var(--line);padding:2px;background:transparent;border-radius:7px}
+input[type=range]{width:100%;accent-color:var(--accent)}
+button{background:#24394a;border:1px solid #425b6d;color:var(--txt);padding:10px 12px;border-radius:8px;cursor:pointer}
+button:hover{border-color:var(--accent)}button.primary{background:#167a70;border-color:#289d90;font-weight:700}
+.buttons{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:13px}
+.buttons .wide{grid-column:1/-1}.view{position:sticky;top:18px}
+.canvas-wrap{background:#101b29;border:1px solid var(--line);padding:8px;border-radius:10px}
+canvas{display:block;width:100%;height:auto;aspect-ratio:4/3}
+.tiny{font-size:12px;color:var(--mut);margin-top:9px}
+.layer-table{width:100%;border-collapse:collapse;margin-top:10px}th,td{border-bottom:1px solid var(--line);padding:8px 5px;text-align:left}th{font-size:11px;color:var(--mut)}td input,td select{padding:6px!important;font-size:12px!important}
+.layer-grid{display:grid;grid-template-columns:30px 1fr 80px 69px 69px;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid var(--line)}
+.layer-grid .index{color:var(--mut)}.layer-grid input[type=color]{height:31px}
+.layer-head{color:var(--mut);font-size:11px}
+footer{padding:14px 22px;color:var(--mut);border-top:1px solid var(--line)}a{color:#7be8d8}
+@media(max-width:900px){main{grid-template-columns:1fr}.view{position:static}}
+</style>
+</head>
+<body>
+<header><div><h1>Generador de Paisajes Parallax</h1><p>Montañas y ciudades · capas editables · exportación PNG · semillas reproducibles</p></div><span>Reconstrucción web · v0.1</span></header>
+<main>
+<section class="panel">
+<h2>Configuración general</h2>
+<div class="controls">
+<div class="field"><label for="width">Ancho (px)</label><input id="width" type="number" min="100" max="4096" value="960"></div>
+<div class="field"><label for="height">Alto (px)</label><input id="height" type="number" min="100" max="4096" value="540"></div>
+<div class="field"><label for="count">Número de capas (2–24)</label><input id="count" type="number" min="2" max="24" value="6"></div>
+<div class="field"><label for="seed">Semilla (seed)</label><input id="seed" type="text" value="parallax-2025"></div>
+<div class="field"><label for="sky">Color del cielo</label><input id="sky" type="color" value="#96dbef"></div>
+<div class="field"><label for="front">Color cercano</label><input id="front" type="color" value="#164c78"></div>
+<div class="field"><label for="amp">Amplitud global (%) <output id="ampVal">10</output></label><input id="amp" type="range" min="2" max="35" value="10"></div>
+<div class="field"><label for="detail">Detalle global <output id="detailVal">42</output></label><input id="detail" type="range" min="1" max="100" value="42"></div>
+</div>
+<div class="buttons">
+<button id="randomSeed">Nueva semilla</button><button id="apply">Generar paisaje</button>
+</div>
+<h2 style="margin-top:22px">Capas individuales</h2>
+<p class="tiny">De atrás hacia adelante. Tipo, amplitud, detalle y color son configurables por capa. Cambiar la semilla reproduce el paisaje.</p>
+<div class="layer-grid layer-head"><span>#</span><span>Tipo</span><span>Color</span><span>Amp. %</span><span>Detalle</span></div>
+<div id="layers"></div>
+<div class="buttons">
+<button id="allMountains">Todas montañas</button><button id="allBuildings">Todos edificios</button>
+</div>
+</section>
+<section class="panel view">
+<h2>Vista previa</h2><div class="canvas-wrap"><canvas id="preview" width="960" height="540" aria-label="Vista previa del paisaje"></canvas></div>
+<div class="controls" style="margin-top:13px">
+<div class="field"><label for="speed">Velocidad del paralaje <output id="speedVal">1</output></label><input id="speed" type="range" min="0" max="4" step=".25" value="1"></div>
+<div class="field"><label style="margin-top:14px"><input type="checkbox" id="animate"> Animar vista previa</label></div>
+</div>
+<div class="buttons">
+<button id="saveComposite" class="primary">Descargar paisaje PNG</button>
+<button id="saveLayers" class="primary">Descargar capas ZIP</button>
+</div>
+<p class="tiny" id="status" role="status">Listo. Cada exportación tiene las dimensiones originales, independientemente de la vista previa.</p>
+<p class="tiny">El ZIP incluye <code>capa_00_cielo.png</code> y cada capa con fondo transparente. En edificios, las siluetas llegan hasta el borde inferior del lienzo.</p>
+</section>
+</main>
+<footer>Desarrollado por Raúl Cámara Carreón · <a href="https://github.com/raulcamaracarreon/Landscape-Generator-Parallax">Código en GitHub</a> · Sin bibliotecas externas</footer>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
+const state={layers:[],canvases:[],skyCanvas:null,w:960,h:540,offset:0,last:0,raf:0};
+const hexToRgb=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
+const toHex=a=>"#"+a.map(v=>clamp(Math.round(v),0,255).toString(16).padStart(2,"0")).join("");
+function mix(a,b,t){const x=hexToRgb(a),y=hexToRgb(b);return toHex(x.map((v,i)=>v*(1-t)+y[i]*t))}
+function hash(s){let h=2166136261;for(const c of s){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
+function rng(seed){let a=hash(seed);return function(){a+=0x6D2B79F5;let t=a;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}}
+function size(){return [clamp(parseInt($("width").value)||960,100,4096),clamp(parseInt($("height").value)||540,100,4096)]}
+function defaults(i,n){return{type:i%3===2?"buildings":"mountains",color:mix($("sky").value,$("front").value,(i+1)/n),amp:clamp(Number($("amp").value)+(i%3-1)*2,2,35),detail:clamp(Number($("detail").value)+(i%4-2)*5,1,100)}}
+function syncCount(){const n=clamp(parseInt($("count").value)||6,2,24);$("count").value=n;while(state.layers.length<n)state.layers.push(defaults(state.layers.length,n));state.layers.length=n;renderLayers()}
+function renderLayers(){
+const el=$("layers");el.replaceChildren();
+state.layers.forEach((layer,i)=>{
+ const row=document.createElement("div");row.className="layer-grid";
+ const index=document.createElement("span");index.className="index";index.textContent=String(i+1).padStart(2,"0");
+ const type=document.createElement("select");for(const [value,label] of [["mountains","Montaña"],["buildings","Edificio"]]){const opt=new Option(label,value);type.add(opt)}type.value=layer.type;
+ const color=document.createElement("input");color.type="color";color.value=layer.color;
+ const amp=document.createElement("input");amp.type="number";amp.min=2;amp.max=35;amp.value=layer.amp;
+ const detail=document.createElement("input");detail.type="number";detail.min=1;detail.max=100;detail.value=layer.detail;
+ type.onchange=()=>{layer.type=type.value;generate()};
+ color.oninput=()=>{layer.color=color.value;generate()};
+ amp.onchange=()=>{layer.amp=clamp(Number(amp.value)||10,2,35);amp.value=layer.amp;generate()};
+ detail.onchange=()=>{layer.detail=clamp(Number(detail.value)||40,1,100);detail.value=layer.detail;generate()};
+ row.append(index,type,color,amp,detail);el.append(row)
+})}
+function canvas(w,h){const c=document.createElement("canvas");c.width=w;c.height=h;return c}
+function drawMountain(ctx,w,h,layer,random,i){
+ const base=h*(i+1)/(state.layers.length+1);const amplitude=h*layer.amp/100;
+ const points=clamp(Math.round(layer.detail*1.8),8,240);const ys=Array.from({length:points},()=>base+(random()-.5)*2*amplitude);
+ ctx.beginPath();ctx.moveTo(0,ys[0]);
+ for(let j=1;j<=points;j++){const x=w*j/points;const y=ys[j%points];ctx.lineTo(x,y)}
+ ctx.lineTo(w,h);ctx.lineTo(0,h);ctx.closePath()
+}
+function drawBuildings(ctx,w,h,layer,random,i){
+ const base=h*(i+1)/(state.layers.length+1);const amp=h*layer.amp/100;
+ const count=clamp(Math.round(4+layer.detail*.33),4,60);
+ const heights=Array.from({length:count},()=>clamp(base+amp*(random()*1.7-.85),h*.04,h*.94));
+ // Close at the canvas bottom. Do not introduce a floating baseline.
+ ctx.beginPath();ctx.moveTo(0,h);ctx.lineTo(0,heights[0]);
+ for(let j=0;j<count;j++){const x1=w*j/count,x2=w*(j+1)/count;ctx.lineTo(x1,heights[j]);ctx.lineTo(x2,heights[j]);if(j<count-1)ctx.lineTo(x2,heights[j+1])}
+ ctx.lineTo(w,h);ctx.closePath()
+}
+function generate(){
+ [state.w,state.h]=size();const {w,h}=state;
+ const sky=canvas(w,h);let ctx=sky.getContext("2d");ctx.fillStyle=$("sky").value;ctx.fillRect(0,0,w,h);state.skyCanvas=sky;
+ state.canvases=state.layers.map((layer,i)=>{
+  const c=canvas(w,h),g=c.getContext("2d"),random=rng($("seed").value+"|"+i+"|"+layer.type);
+  if(layer.type==="buildings")drawBuildings(g,w,h,layer,random,i);else drawMountain(g,w,h,layer,random,i);
+  g.fillStyle=layer.color;g.fill();return c;
+ });
+ state.offset=0;drawPreview();$("status").textContent="Paisaje generado: "+w+" × "+h+" px, "+state.layers.length+" capas.";
+}
+function compose(ctx,w,h,offset=0){
+ ctx.clearRect(0,0,w,h);ctx.drawImage(state.skyCanvas,0,0);
+ state.canvases.forEach((c,i)=>{const factor=(i+1)/state.canvases.length;const dx=((offset*factor)%w+w)%w;ctx.drawImage(c,-dx,0);ctx.drawImage(c,w-dx,0)})
+}
+function drawPreview(){const p=$("preview");p.width=state.w;p.height=state.h;compose(p.getContext("2d"),state.w,state.h,state.offset)}
+function loop(t){if(!$("animate").checked){state.raf=0;return}if(state.last){state.offset+=(t-state.last)*.035*Number($("speed").value);drawPreview()}state.last=t;state.raf=requestAnimationFrame(loop)}
+function saveBlob(blob,name){const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000)}
+const blobPNG=c=>new Promise((resolve,reject)=>c.toBlob(b=>b?resolve(b):reject(new Error("No se pudo crear PNG")),"image/png"));
+function crc32(bytes){let c=-1;for(const b of bytes){c^=b;for(let j=0;j<8;j++)c=(c>>>1)^((c&1)?0xedb88320:0)}return(c^-1)>>>0}
+function zipEntries(entries){
+ const enc=new TextEncoder(),parts=[],central=[];let offset=0;
+ const u16=(a,i,v)=>{a[i]=v&255;a[i+1]=v>>>8&255};
+ const u32=(a,i,v)=>{u16(a,i,v);u16(a,i+2,v>>>16)};
+ for(const {name,bytes} of entries){
+  const filename=enc.encode(name),crc=crc32(bytes),local=new Uint8Array(30+filename.length);
+  u32(local,0,0x04034b50);u16(local,4,20);u16(local,6,0x800);u16(local,8,0);u32(local,14,crc);u32(local,18,bytes.length);u32(local,22,bytes.length);u16(local,26,filename.length);local.set(filename,30);
+  parts.push(local,bytes);
+  const cent=new Uint8Array(46+filename.length);u32(cent,0,0x02014b50);u16(cent,4,20);u16(cent,6,20);u16(cent,8,0x800);u32(cent,16,crc);u32(cent,20,bytes.length);u32(cent,24,bytes.length);u16(cent,28,filename.length);u32(cent,42,offset);cent.set(filename,46);central.push(cent);offset+=local.length+bytes.length;
+ }
+ const centralSize=central.reduce((s,a)=>s+a.length,0);const end=new Uint8Array(22);
+ u32(end,0,0x06054b50);u16(end,8,entries.length);u16(end,10,entries.length);u32(end,12,centralSize);u32(end,16,offset);
+ return new Blob([...parts,...central,end],{type:"application/zip"})
+}
+$("count").addEventListener("change",()=>{syncCount();generate()});
+$("apply").onclick=generate;
+$("randomSeed").onclick=()=>{$("seed").value=Math.random().toString(36).slice(2,10);generate()};
+$("allMountains").onclick=()=>{state.layers.forEach(l=>l.type="mountains");renderLayers();generate()};
+$("allBuildings").onclick=()=>{state.layers.forEach(l=>l.type="buildings");renderLayers();generate()};
+for(const id of ["sky","front","amp","detail"]){$(id).addEventListener("input",()=>{$("ampVal").textContent=$("amp").value;$("detailVal").textContent=$("detail").value})}
+$("sky").addEventListener("change",()=>{state.layers.forEach((l,i)=>l.color=mix($("sky").value,$("front").value,(i+1)/state.layers.length));renderLayers();generate()});
+$("front").addEventListener("change",()=>{state.layers.forEach((l,i)=>l.color=mix($("sky").value,$("front").value,(i+1)/state.layers.length));renderLayers();generate()});
+$("amp").addEventListener("change",()=>{state.layers.forEach(l=>l.amp=Number($("amp").value));renderLayers();generate()});
+$("detail").addEventListener("change",()=>{state.layers.forEach(l=>l.detail=Number($("detail").value));renderLayers();generate()});
+$("width").addEventListener("change",generate);$("height").addEventListener("change",generate);$("seed").addEventListener("change",generate);
+$("speed").oninput=()=>{$("speedVal").textContent=$("speed").value};
+$("animate").onchange=()=>{if($("animate").checked&&!state.raf){state.last=0;state.raf=requestAnimationFrame(loop)}};
+$("saveComposite").onclick=async()=>{try{const c=canvas(state.w,state.h);compose(c.getContext("2d"),state.w,state.h,0);saveBlob(await blobPNG(c),"paisaje_completo.png")}catch(e){$("status").textContent=e.message}};
+$("saveLayers").onclick=async()=>{
+ try{
+  $("status").textContent="Preparando ZIP…";const items=[state.skyCanvas,...state.canvases],entries=[];
+  for(let i=0;i<items.length;i++){const blob=await blobPNG(items[i]);entries.push({name:i===0?"capa_00_cielo.png":"capa_"+String(i).padStart(2,"0")+".png",bytes:new Uint8Array(await blob.arrayBuffer())})}
+  saveBlob(zipEntries(entries),"paisaje_capas.zip");$("status").textContent="ZIP generado con "+entries.length+" archivos PNG.";
+ }catch(e){$("status").textContent="Error al exportar: "+e.message}
+};
+syncCount();generate();
+</script>
+</body>
+</html>
