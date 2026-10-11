@@ -71,7 +71,6 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Qt LGPL source archive collection failed; Windows publication blocked' }
           Compress-Archive -Path release/Desktop/LGPL_SOURCE/* -DestinationPath release/Landscape-Generator-Qt-LGPL-Sources.zip -Force
           Remove-Item release/Desktop/LGPL_SOURCE -Recurse -Force
-          Copy-Item release/Landscape-Generator-Qt-LGPL-Sources.zip release/Desktop/Qt-LGPL-Sources.zip
           Invoke-WebRequest "https://www.gnu.org/licenses/lgpl-3.0.txt" -OutFile release/Desktop/LGPL-3.0.txt
           Invoke-WebRequest "https://www.gnu.org/licenses/gpl-3.0.txt" -OutFile release/Desktop/GPL-3.0.txt
           Copy-Item web/index.html, web/i18n.js release/Web/
@@ -110,14 +109,18 @@ jobs:
           name: Landscape-Generator-Web
           path: release/Landscape-Generator-Web.zip
 
-      # The LGPL source collector must succeed before publishing Windows assets.
-      - name: Publish GitHub Release for version tags
-        if: startsWith(github.ref, 'refs/tags/v') || inputs.publish_windows
+      - name: Publish web ZIP for new version tags
+        if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event_name == 'workflow_dispatch' && 'v1.0.0' || github.ref_name }}
           generate_release_notes: true
+          files: release/Landscape-Generator-Web.zip
+
+      - name: Publish desktop and corresponding LGPL sources to v1.0.0
+        if: github.event_name == 'workflow_dispatch' && inputs.publish_windows
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.0
           files: |
-            release/Landscape-Generator-Web.zip
             release/Landscape-Generator-Desktop-Windows.zip
             release/Landscape-Generator-Qt-LGPL-Sources.zip
