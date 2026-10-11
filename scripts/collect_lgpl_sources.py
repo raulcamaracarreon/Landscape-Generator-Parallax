@@ -21,7 +21,7 @@ for dll in bundled:
 if unknown:raise SystemExit("STOP: Unmapped Qt DLLs: "+", ".join(sorted(unknown)))
 archives={
     **{name:f"https://github.com/qt/{name}/archive/refs/tags/v{qt_version}.tar.gz" for name in sorted(modules)},
-    "pyside-setup":f"https://github.com/qt/pyside-setup/archive/refs/tags/v{qt_version}.tar.gz",
+    "pyside-setup":f"https://github.com/qtproject/pyside-pyside-setup/archive/refs/tags/v{qt_version}.tar.gz",
 }
 manifest={"Qt_PySide_version":qt_version,"bundled_qt_dlls":sorted(bundled),"qt_source_modules":sorted(modules),"sources":[],"notes":"Inspect bundled plugins and third-party libraries separately before certifying compliance."}
 for name,url in archives.items():
