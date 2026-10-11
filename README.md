@@ -23,12 +23,12 @@ Two independent packages are produced by the [Windows packaging workflow](.githu
 
 | Package | Contents | Requirements |
 | --- | --- | --- |
-| **Desktop for Windows** — `Landscape-Generator-Desktop-Windows.zip` | Language selector and ten standalone Windows executables | Windows 10/11; no Python installation |
+| **Desktop for Windows** — `Landscape-Generator-Desktop-Windows.zip` | Language selector plus ten self-contained Windows application folders with Qt DLLs | Windows 10/11; no Python installation |
 | **Portable web app** — `Landscape-Generator-Web.zip` | `index.html`, `i18n.js`, instructions | Modern web browser; works offline |
 
 **[View GitHub Releases / Ver versiones y descargas](https://github.com/raulcamaracarreon/Landscape-Generator-Parallax/releases)**
 
-To build the ZIP archives, open **Actions → Package Desktop and Web → Run workflow**. The resulting packages appear in that run's Artifacts section. To publish downloadable release assets, create and push a version tag such as `v1.0.0`; the workflow packages both editions and publishes the ZIP files as release assets after the build succeeds.
+For the Windows binaries, follow the [Qt LGPLv3 compliance checklist](THIRD_PARTY_NOTICES.md). The workflow now uses PyInstaller `--onedir`, not `--onefile`, and includes available license notices. Before an official binary release, verify the replacement/relinking mechanism and corresponding Qt source availability.\n\nTo build the ZIP archives, open **Actions → Package Desktop and Web → Run workflow**. The resulting packages appear in that run's Artifacts section. To publish downloadable release assets, create and push a version tag such as `v1.0.0`; the workflow packages both editions and publishes the ZIP files as release assets after the build succeeds.
 
 **Build status:** The workflow has been configured but the Windows binaries are not yet verified. A GitHub Release will not appear until a successful tagged run completes.
 
@@ -61,10 +61,10 @@ The previous project folder was lost. This repository is a **reconstruction base
 The source launcher can run alongside source scripts. For a binary distribution, build the ten language-specific entry points and place their `.exe` files alongside the compiled launcher. Build launcher with:
 
 ```powershell
-python -m PyInstaller --onefile --windowed launcher.py
+python -m PyInstaller --onedir --windowed launcher.py
 ```
 
-The launcher does not itself embed the ten other executables. Do not distribute `launcher.exe` alone.
+The launcher does not embed the ten other applications. Keep its `_internal` directory and the complete `apps/` tree alongside the launcher executable. The automated Windows build now uses PyInstaller `--onedir` to keep dependent Qt DLLs available as separate files.
 
 ## Author
 
