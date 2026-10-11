@@ -90,6 +90,8 @@ jobs:
           Compress-Archive -Path release/Web/* -DestinationPath release/Landscape-Generator-Web.zip -Force
 
       - name: Collect corresponding LGPL sources
+        id: sources
+        continue-on-error: true
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
@@ -104,6 +106,7 @@ jobs:
           path: release/Landscape-Generator-Desktop-Windows.zip
 
       - name: Upload corresponding Qt source archive
+        if: steps.sources.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: Landscape-Generator-Qt-LGPL-Sources
@@ -124,10 +127,15 @@ jobs:
           files: release/Landscape-Generator-Web.zip
 
       - name: Publish desktop and corresponding LGPL sources to v1.0.0
-        if: github.event_name == 'workflow_dispatch' && inputs.publish_windows
+        if: github.event_name == 'workflow_dispatch' && inputs.publish_windows && steps.sources.outcome == 'success'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.0
           files: |
             release/Landscape-Generator-Desktop-Windows.zip
             release/Landscape-Generator-Qt-LGPL-Sources.zip
+
+      - name: Report source collection failure after preserving application ZIPs
+        if: steps.sources.outcome == 'failure'
+        shell: pwsh
+        run: throw 'Qt LGPL sources missing; Windows release blocked. Application ZIPs are still available as workflow artifacts.'
