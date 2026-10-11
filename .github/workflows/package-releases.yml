@@ -47,7 +47,7 @@ jobs:
             python -m PyInstaller --noconfirm --clean --onedir --windowed --paths . "src/$app.py"
             if ($LASTEXITCODE -ne 0) { throw "Build failed: $app" }
           }
-          python -m PyInstaller --noconfirm --clean --onefile --windowed --name Landscape-Generator-Launcher launcher.py
+          python -m PyInstaller --noconfirm --clean --onedir --windowed --name Landscape-Generator-Launcher launcher.py
           if ($LASTEXITCODE -ne 0) { throw 'Launcher build failed' }
 
       - name: Create the independent distributions
