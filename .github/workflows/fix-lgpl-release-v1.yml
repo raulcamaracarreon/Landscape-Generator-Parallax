@@ -1,0 +1,38 @@
+name: Complete LGPL v1 sources and notices without rebuilding
+
+on:
+  push:
+    branches:
+      - fix/lgpl-v1-sources-and-notices
+
+permissions:
+  contents: write
+
+jobs:
+  correct-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out correction script
+        uses: actions/checkout@v4
+      - name: Download the published files (no application compilation)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p release_audit
+          gh release download v1.0.0 --pattern 'Landscape-Generator-Desktop-Windows.zip' --dir release_audit
+          gh release download v1.0.0 --pattern 'Landscape-Generator-Qt-LGPL-Sources.zip' --dir release_audit
+          curl --fail --location --retry 3 --output release_audit/qtimageformats-6.11.0.tar.gz             'https://github.com/qt/qtimageformats/archive/refs/tags/v6.11.0.tar.gz'
+      - name: Repair source coverage and license documents preserving every original EXE and DLL
+        run: python scripts/repair_release_lgpl_v1.py
+      - name: Update the two GitHub Release assets only after full verification
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload v1.0.0             patched/Landscape-Generator-Qt-LGPL-Sources.zip             patched/Landscape-Generator-Desktop-Windows.zip             --clobber
+      - name: Verify updated release assets exist
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release view v1.0.0 --json assets --jq '.assets[].name' | grep -Fx 'Landscape-Generator-Desktop-Windows.zip'
+          gh release view v1.0.0 --json assets --jq '.assets[].name' | grep -Fx 'Landscape-Generator-Qt-LGPL-Sources.zip'
