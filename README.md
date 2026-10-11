@@ -4,6 +4,12 @@ Multilingual procedural mountain landscape generator for 2D games and parallax b
 
 **Ten languages:** Español, English, Français, Deutsch, Português, Italiano, Русский, 中文, 日本語, हिन्दी.
 
+## 🌐 Try the web app / Probar la aplicación web
+
+**[▶ Open Landscape Generator online / Abrir el generador de paisajes](https://raulcamaracarreon.github.io/Landscape-Generator-Parallax/web/)**
+
+No installation required / No requiere instalación.
+
 ## Features
 
 - Generate 2–10 layers of mountains with interpolated colors.
@@ -55,6 +61,6 @@ No project-level license selected yet. Public repository visibility does not aut
 
 Open [web/index.html](web/index.html) in a modern browser. This self-contained page needs no Python or external dependencies. Features include configurable mountain/building layers, deterministic seeds, animated parallax preview, composite PNG export and a ZIP of transparent layer PNGs (including `capa_00_cielo.png`).
 
-To publish via GitHub Pages, choose **Settings → Pages → Build and deployment → Source: Deploy from a branch → Branch: main → Folder: / (root)**, then open `https://raulcamaracarreon.github.io/Landscape-Generator-Parallax/web/`. Pages deployment must be enabled in repository settings; committing the HTML does not activate hosting automatically.
+To publish via GitHub Pages, choose **Settings → Pages → Build and deployment → Source: Deploy from a branch → Branch: main → Folder: / (root)**, then open [the live web application](https://raulcamaracarreon.github.io/Landscape-Generator-Parallax/web/). Pages deployment must be enabled in repository settings; committing the HTML does not activate hosting automatically.
 
 The web app is a reconstruction of the September 2025 single-file HTML generator, not the original recovered HTML. Test its exports and appearance before a public release.
