@@ -10,7 +10,7 @@ if version("shiboken6")!=qt_version or version("PySide6")!=qt_version:
 # Identify the Qt modules actually bundled, not just the pip packages.
 bundled={p.name.lower() for p in Path("release/Desktop").rglob("Qt6*.dll")}
 modules={"qtbase"}
-prefix_map={"qt6svg":"qtsvg","qt6qml":"qtdeclarative","qt6quick":"qtdeclarative","qt6shader":"qtshadertools","qt6multimedia":"qtmultimedia","qt6websockets":"qtwebsockets","qt6serialport":"qtserialport","qt6positioning":"qtpositioning","qt6charts":"qtcharts"}
+prefix_map={"qt6svg":"qtsvg","qt6qml":"qtdeclarative","qt6quick":"qtdeclarative","qt6shader":"qtshadertools","qt6multimedia":"qtmultimedia","qt6websockets":"qtwebsockets","qt6serialport":"qtserialport","qt6positioning":"qtpositioning","qt6charts":"qtcharts","qt6pdf":"qtwebengine","qt6virtualkeyboard":"qtvirtualkeyboard"}
 core=("qt6core","qt6gui","qt6widgets","qt6network","qt6opengl","qt6printsupport","qt6test","qt6sql","qt6xml","qt6dbus","qt6concurrent")
 unknown=[]
 for dll in bundled:
