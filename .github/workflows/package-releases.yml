@@ -44,7 +44,7 @@ jobs:
             'landscape_generator_hi'
           )
           foreach ($app in $apps) {
-            python -m PyInstaller --noconfirm --clean --onefile --windowed --paths . "src/$app.py"
+            python -m PyInstaller --noconfirm --clean --onedir --windowed --paths . "src/$app.py"
             if ($LASTEXITCODE -ne 0) { throw "Build failed: $app" }
           }
           python -m PyInstaller --noconfirm --clean --onefile --windowed --name Landscape-Generator-Launcher launcher.py
@@ -54,13 +54,22 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
+          $apps = @('generador_paisajes_es','landscape_generator_en','generateur_paysages_fr','landschaftsgenerator_de','Gerador_de_Paisagens_pt','generatore_paesaggi_it','generator_peyzazhey_ru','landscape_generator_zh','landscape_generator_ja','landscape_generator_hi')
           New-Item -ItemType Directory -Force -Path release/Desktop, release/Web | Out-Null
-          Copy-Item dist/*.exe release/Desktop/
+          New-Item -ItemType Directory -Force -Path release/Desktop/apps | Out-Null
+          foreach ($app in $apps) { Copy-Item "dist/$app" "release/Desktop/apps/$app" -Recurse }
+          Copy-Item dist/Landscape-Generator-Launcher/* release/Desktop/ -Recurse
+          Copy-Item LICENSE release/Desktop/LICENSE-MIT.txt
+          Copy-Item THIRD_PARTY_NOTICES.md release/Desktop/THIRD_PARTY_NOTICES.md
+          Invoke-WebRequest "https://www.gnu.org/licenses/lgpl-3.0.txt" -OutFile release/Desktop/LGPL-3.0.txt
+          Invoke-WebRequest "https://www.gnu.org/licenses/gpl-3.0.txt" -OutFile release/Desktop/GPL-3.0.txt
           Copy-Item web/index.html, web/i18n.js release/Web/
+          Copy-Item LICENSE release/Web/LICENSE-MIT.txt
           @'
           LANDSCAPE GENERATOR - DESKTOP (Windows)
           Run Landscape-Generator-Launcher.exe to choose one of ten languages.
-          Keep all 11 executables together in the same folder.
+          Keep launcher.exe, its _internal folder and the complete apps folder together.
+          Qt/PySide6 runtime files must remain intact; see THIRD_PARTY_NOTICES.md.
           No separate Python installation required.
           '@ | Set-Content release/Desktop/README.txt -Encoding utf8
           @'
