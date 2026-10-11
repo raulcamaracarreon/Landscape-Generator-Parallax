@@ -30,7 +30,7 @@ footer{padding:14px 22px;color:var(--mut);border-top:1px solid var(--line)}a{col
 </style>
 </head>
 <body>
-<header><div><h1>Generador de Paisajes Parallax</h1><p>Montañas y ciudades · capas editables · exportación PNG · semillas reproducibles</p></div><span>Reconstrucción web · v0.1</span></header>
+<header><div><h1>Generador de Paisajes Parallax</h1><p>Montañas y ciudades · capas editables · exportación PNG · semillas reproducibles</p></div><div style="display:flex;gap:12px;align-items:center"><label for="language">🌐 Language / Idioma</label><select id="language" aria-label="Language"><option value="es">Español</option><option value="en">English</option><option value="fr">Français</option><option value="de">Deutsch</option><option value="pt">Português</option><option value="it">Italiano</option><option value="ru">Русский</option><option value="zh">简体中文</option><option value="ja">日本語</option><option value="hi">हिन्दी</option></select></div></header>
 <main>
 <section class="panel">
 <h2>Configuración general</h2>
@@ -70,6 +70,7 @@ footer{padding:14px 22px;color:var(--mut);border-top:1px solid var(--line)}a{col
 </section>
 </main>
 <footer>Desarrollado por Raúl Cámara Carreón · <a href="https://github.com/raulcamaracarreon/Landscape-Generator-Parallax">Código en GitHub</a> · Sin bibliotecas externas</footer>
+<script src="i18n.js"></script>
 <script>
 "use strict";
 const $=id=>document.getElementById(id);
@@ -88,7 +89,7 @@ const el=$("layers");el.replaceChildren();
 state.layers.forEach((layer,i)=>{
  const row=document.createElement("div");row.className="layer-grid";
  const index=document.createElement("span");index.className="index";index.textContent=String(i+1).padStart(2,"0");
- const type=document.createElement("select");for(const [value,label] of [["mountains","Montaña"],["buildings","Edificio"]]){const opt=new Option(label,value);type.add(opt)}type.value=layer.type;
+ const type=document.createElement("select");for(const [value,label] of [["mountains","Montaña"],["buildings","Edificio"]]){const opt=new Option(t(value==="mountains"?"mountain":"building"),value);type.add(opt)}type.value=layer.type;
  const color=document.createElement("input");color.type="color";color.value=layer.color;
  const amp=document.createElement("input");amp.type="number";amp.min=2;amp.max=35;amp.value=layer.amp;
  const detail=document.createElement("input");detail.type="number";detail.min=1;detail.max=100;detail.value=layer.detail;
@@ -123,7 +124,7 @@ function generate(){
   if(layer.type==="buildings")drawBuildings(g,w,h,layer,random,i);else drawMountain(g,w,h,layer,random,i);
   g.fillStyle=layer.color;g.fill();return c;
  });
- state.offset=0;drawPreview();$("status").textContent="Paisaje generado: "+w+" × "+h+" px, "+state.layers.length+" capas.";
+ state.offset=0;drawPreview();$("status").textContent=t("initial",{w,h,n:state.layers.length});
 }
 function compose(ctx,w,h,offset=0){
  ctx.clearRect(0,0,w,h);ctx.drawImage(state.skyCanvas,0,0);
@@ -132,7 +133,7 @@ function compose(ctx,w,h,offset=0){
 function drawPreview(){const p=$("preview");p.width=state.w;p.height=state.h;compose(p.getContext("2d"),state.w,state.h,state.offset)}
 function loop(t){if(!$("animate").checked){state.raf=0;return}if(state.last){state.offset+=(t-state.last)*.035*Number($("speed").value);drawPreview()}state.last=t;state.raf=requestAnimationFrame(loop)}
 function saveBlob(blob,name){const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000)}
-const blobPNG=c=>new Promise((resolve,reject)=>c.toBlob(b=>b?resolve(b):reject(new Error("No se pudo crear PNG")),"image/png"));
+const blobPNG=c=>new Promise((resolve,reject)=>c.toBlob(b=>b?resolve(b):reject(new Error(t("zipError"))),"image/png"));
 function crc32(bytes){let c=-1;for(const b of bytes){c^=b;for(let j=0;j<8;j++)c=(c>>>1)^((c&1)?0xedb88320:0)}return(c^-1)>>>0}
 function zipEntries(entries){
  const enc=new TextEncoder(),parts=[],central=[];let offset=0;
@@ -164,12 +165,15 @@ $("animate").onchange=()=>{if($("animate").checked&&!state.raf){state.last=0;sta
 $("saveComposite").onclick=async()=>{try{const c=canvas(state.w,state.h);compose(c.getContext("2d"),state.w,state.h,0);saveBlob(await blobPNG(c),"paisaje_completo.png")}catch(e){$("status").textContent=e.message}};
 $("saveLayers").onclick=async()=>{
  try{
-  $("status").textContent="Preparando ZIP…";const items=[state.skyCanvas,...state.canvases],entries=[];
+  $("status").textContent=t("zipWorking");const items=[state.skyCanvas,...state.canvases],entries=[];
   for(let i=0;i<items.length;i++){const blob=await blobPNG(items[i]);entries.push({name:i===0?"capa_00_cielo.png":"capa_"+String(i).padStart(2,"0")+".png",bytes:new Uint8Array(await blob.arrayBuffer())})}
-  saveBlob(zipEntries(entries),"paisaje_capas.zip");$("status").textContent="ZIP generado con "+entries.length+" archivos PNG.";
- }catch(e){$("status").textContent="Error al exportar: "+e.message}
+  saveBlob(zipEntries(entries),"paisaje_capas.zip");$("status").textContent=t("zipDone",{n:entries.length});
+ }catch(e){$("status").textContent=t("exportError",{error:e.message})}
 };
 syncCount();generate();
+$("language").addEventListener("change",event=>applyLanguage(event.target.value));
+let savedLanguage="es";try{savedLanguage=localStorage.getItem("landscape-lang")||"es"}catch(_){}
+applyLanguage(savedLanguage);
 </script>
 </body>
 </html>
