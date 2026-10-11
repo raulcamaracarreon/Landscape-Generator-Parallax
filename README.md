@@ -34,6 +34,8 @@ The launcher searches beside itself for ten prebuilt Windows executables, or in 
 - `launcher.py`: language selection
 - `src/*.py`: ten language entry points
 - `requirements.txt`: PySide6 and NumPy
+- `web/index.html`: browser application with mountains, buildings and parallax preview
+- `web/i18n.js`: translations for ten web interface languages
 
 ## Recovered project status
 
@@ -59,7 +61,7 @@ No project-level license selected yet. Public repository visibility does not aut
 
 ## Web version (HTML + Canvas)
 
-Open [web/index.html](web/index.html) in a modern browser. This self-contained page needs no Python or external dependencies. Features include configurable mountain/building layers, deterministic seeds, animated parallax preview, composite PNG export and a ZIP of transparent layer PNGs (including `capa_00_cielo.png`).
+Open [web/index.html](web/index.html) in a modern browser. This self-contained page needs no Python or external dependencies. It supports ten languages through a selector at the top of the page, with the preference retained in the browser. Features include configurable mountain/building layers, deterministic seeds, animated parallax preview, composite PNG export and a ZIP of transparent layer PNGs (including `capa_00_cielo.png`).
 
 To publish via GitHub Pages, choose **Settings → Pages → Build and deployment → Source: Deploy from a branch → Branch: main → Folder: / (root)**, then open [the live web application](https://raulcamaracarreon.github.io/Landscape-Generator-Parallax/web/). Pages deployment must be enabled in repository settings; committing the HTML does not activate hosting automatically.
 
