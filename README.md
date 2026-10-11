@@ -50,3 +50,11 @@ Raúl Cámara Carreón · https://github.com/raulcamaracarreon
 ## Licensing
 
 No project-level license selected yet. Public repository visibility does not automatically authorize redistribution or modification. Review PySide6 (Qt/LGPL) and NumPy dependencies and their licenses before releasing packaged binaries.
+
+## Web version (HTML + Canvas)
+
+Open [web/index.html](web/index.html) in a modern browser. This self-contained page needs no Python or external dependencies. Features include configurable mountain/building layers, deterministic seeds, animated parallax preview, composite PNG export and a ZIP of transparent layer PNGs (including `capa_00_cielo.png`).
+
+To publish via GitHub Pages, choose **Settings → Pages → Build and deployment → Source: Deploy from a branch → Branch: main → Folder: / (root)**, then open `https://raulcamaracarreon.github.io/Landscape-Generator-Parallax/web/`. Pages deployment must be enabled in repository settings; committing the HTML does not activate hosting automatically.
+
+The web app is a reconstruction of the September 2025 single-file HTML generator, not the original recovered HTML. Test its exports and appearance before a public release.
