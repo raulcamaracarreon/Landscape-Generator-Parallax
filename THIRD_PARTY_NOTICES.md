@@ -36,3 +36,13 @@ The open-source Qt references are:
 - https://doc.qt.io/qtforpython-6/
 
 This checklist is engineering guidance, **not a legal compliance certification**. Consult a qualified attorney if uncertainty remains.
+
+## How to identify and replace bundled Qt DLLs (Windows)
+
+1. Unzip `Landscape-Generator-Desktop-Windows.zip` completely.
+2. Inspect `DEPENDENCY_VERSIONS.txt` for PySide6, shiboken6 and NumPy versions. Check the application directories under `apps/<language>/_internal/PySide6/` for the actually bundled Qt libraries and plugins (layout can vary with PyInstaller versions).
+3. Make a separate backup copy of the entire application directory before testing. Build or obtain an ABI-compatible, appropriately licensed replacement Qt DLL and replace its matching DLL in the copied runtime directory; also verify corresponding plugins if needed.
+4. Launch the corresponding executable and document the result, including any DLL-load or plugin errors. The ability to see DLL files does not by itself prove that replacement works.
+5. Do not remove or alter the MIT, LGPL/GPL or third-party notices from redistributed copies.
+
+**Source code requirement:** For a public binary release, distribute an exact-version source archive of the LGPL-covered Qt/PySide6/Shiboken components and any modifications, or a legally sufficient written offer under the distributor's control. Record source archive hashes, references and the binary version manifest. This has not yet been completed here, so Windows binaries remain unreleased.
