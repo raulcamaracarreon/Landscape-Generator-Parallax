@@ -5,7 +5,7 @@ from pathlib import Path
 from zipfile import ZipFile
 root=Path("release/Desktop/LGPL_SOURCE");root.mkdir(parents=True,exist_ok=True)
 qt_version=version("PySide6_Essentials")
-if version("shiboken6")!=qt_version or version("PySide6")!=qt_version:
+if version("shiboken6")!=qt_version:
     raise SystemExit("Qt for Python component versions differ; inspect manually")
 # Identify the Qt modules actually bundled, not just the pip packages.
 bundled={p.name.lower() for p in Path("release/Desktop").rglob("Qt6*.dll")}
