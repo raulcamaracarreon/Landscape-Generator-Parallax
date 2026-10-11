@@ -2,6 +2,11 @@ name: Package Desktop and Web
 
 on:
   workflow_dispatch:
+    inputs:
+      publish_windows:
+        description: 'Publish Windows and LGPL source package to existing v1.0.0 release after review'
+        type: boolean
+        default: false
   push:
     tags:
       - "v*"
@@ -62,6 +67,11 @@ jobs:
           Copy-Item LICENSE release/Desktop/LICENSE-MIT.txt
           Copy-Item THIRD_PARTY_NOTICES.md release/Desktop/THIRD_PARTY_NOTICES.md
           python -m pip freeze | Set-Content release/Desktop/DEPENDENCY_VERSIONS.txt -Encoding utf8
+          python scripts/collect_lgpl_sources.py
+          if ($LASTEXITCODE -ne 0) { throw 'Qt LGPL source archive collection failed; Windows publication blocked' }
+          Compress-Archive -Path release/Desktop/LGPL_SOURCE/* -DestinationPath release/Landscape-Generator-Qt-LGPL-Sources.zip -Force
+          Remove-Item release/Desktop/LGPL_SOURCE -Recurse -Force
+          Copy-Item release/Landscape-Generator-Qt-LGPL-Sources.zip release/Desktop/Qt-LGPL-Sources.zip
           Invoke-WebRequest "https://www.gnu.org/licenses/lgpl-3.0.txt" -OutFile release/Desktop/LGPL-3.0.txt
           Invoke-WebRequest "https://www.gnu.org/licenses/gpl-3.0.txt" -OutFile release/Desktop/GPL-3.0.txt
           Copy-Item web/index.html, web/i18n.js release/Web/
@@ -88,18 +98,26 @@ jobs:
           name: Landscape-Generator-Desktop-Windows
           path: release/Landscape-Generator-Desktop-Windows.zip
 
+      - name: Upload corresponding Qt source archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: Landscape-Generator-Qt-LGPL-Sources
+          path: release/Landscape-Generator-Qt-LGPL-Sources.zip
+
       - name: Upload web ZIP as workflow artifact
         uses: actions/upload-artifact@v4
         with:
           name: Landscape-Generator-Web
           path: release/Landscape-Generator-Web.zip
 
-      # Desktop binaries require a completed LGPLv3 compliance review before public release.
-      # The web archive and MIT-licensed source can be released independently.
+      # The LGPL source collector must succeed before publishing Windows assets.
       - name: Publish GitHub Release for version tags
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/v') || inputs.publish_windows
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ github.event_name == 'workflow_dispatch' && 'v1.0.0' || github.ref_name }}
           generate_release_notes: true
           files: |
             release/Landscape-Generator-Web.zip
+            release/Landscape-Generator-Desktop-Windows.zip
+            release/Landscape-Generator-Qt-LGPL-Sources.zip
