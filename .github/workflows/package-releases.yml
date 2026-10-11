@@ -69,6 +69,8 @@ jobs:
           Copy-Item LICENSE release/Desktop/LICENSE-MIT.txt
           Copy-Item THIRD_PARTY_NOTICES.md release/Desktop/THIRD_PARTY_NOTICES.md
           python -m pip freeze | Set-Content release/Desktop/DEPENDENCY_VERSIONS.txt -Encoding utf8
+          python scripts/audit_desktop.py
+          if ($LASTEXITCODE -ne 0) { throw 'Desktop Qt DLL inspection failed' }
           Invoke-WebRequest "https://www.gnu.org/licenses/lgpl-3.0.txt" -OutFile release/Desktop/LGPL-3.0.txt
           Invoke-WebRequest "https://www.gnu.org/licenses/gpl-3.0.txt" -OutFile release/Desktop/GPL-3.0.txt
           Copy-Item web/index.html, web/i18n.js release/Web/
@@ -98,6 +100,7 @@ jobs:
           python scripts/collect_lgpl_sources.py
           if ($LASTEXITCODE -ne 0) { throw 'Qt LGPL source collection failed' }
           Compress-Archive -Path release/Desktop/LGPL_SOURCE/* -DestinationPath release/Landscape-Generator-Qt-LGPL-Sources.zip -Force
+          Copy-Item release/Desktop/LGPL_SOURCE/MANIFEST.json release/Desktop/LICENSE_COMPLIANCE/LGPL_SOURCES_MANIFEST.json
 
       - name: Upload desktop ZIP as workflow artifact
         uses: actions/upload-artifact@v4
