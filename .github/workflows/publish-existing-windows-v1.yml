@@ -1,0 +1,127 @@
+name: Publish Windows v1.0.0 from validated build
+
+on:
+  workflow_run:
+    workflows:
+      - Package Desktop and Web
+    types:
+      - completed
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish-windows:
+    # One-time publication: never publish an unrelated build.
+    if: ${{ github.event.workflow_run.id == 38110458735 && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_sha == '07bcaa33eb23294e74a580aec9ec066e28542284' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Windows build artifact without rebuilding
+        uses: actions/download-artifact@v4
+        with:
+          name: Landscape-Generator-Desktop-Windows
+          run-id: 38110458735
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: downloaded/desktop
+
+      - name: Download corresponding LGPL sources from same run
+        uses: actions/download-artifact@v4
+        with:
+          name: Landscape-Generator-Qt-LGPL-Sources
+          run-id: 38110458735
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: downloaded/sources
+
+      - name: Verify publication archives before release
+        shell: bash
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+          from zipfile import ZipFile
+
+          desktop = Path("downloaded/desktop/Landscape-Generator-Desktop-Windows.zip")
+          sources = Path("downloaded/sources/Landscape-Generator-Qt-LGPL-Sources.zip")
+          assert desktop.is_file() and sources.is_file(), "Missing a release archive"
+          apps = [
+              "generador_paisajes_es", "landscape_generator_en",
+              "generateur_paysages_fr", "landschaftsgenerator_de",
+              "Gerador_de_Paisagens_pt", "generatore_paesaggi_it",
+              "generator_peyzazhey_ru", "landscape_generator_zh",
+              "landscape_generator_ja", "landscape_generator_hi",
+          ]
+          with ZipFile(desktop) as z:
+              names = set(z.namelist())
+              required = {
+                  "Landscape-Generator-Launcher.exe", "LICENSE-MIT.txt",
+                  "LGPL-3.0.txt", "GPL-3.0.txt",
+                  "THIRD_PARTY_NOTICES.md", "DEPENDENCY_VERSIONS.txt",
+                  "LICENSE_COMPLIANCE/QT_DLL_REPLACEMENT_CHECK.json",
+              }
+              required.update(f"apps/{app}/{app}.exe" for app in apps)
+              missing = required - names
+              assert not missing, f"Missing Windows ZIP entries: {sorted(missing)}"
+              audit = json.loads(z.read("LICENSE_COMPLIANCE/QT_DLL_REPLACEMENT_CHECK.json"))
+              assert len(audit["results"]) == 10, "Qt DLL replacement audit incomplete"
+              assert all(x["replacement_test"] == "identical DLL restored" for x in audit["results"])
+              assert str(audit["Qt_version"]) == "6.11.0", "Unexpected Qt version"
+              bundled = {
+                  Path(p).name.lower()
+                  for p in names
+                  if Path(p).name.lower().startswith("qt6") and p.lower().endswith(".dll")
+              }
+              assert "qt6core.dll" in bundled, "Qt6Core.dll missing from Windows package"
+          with ZipFile(sources) as z:
+              manifests = [n for n in z.namelist() if n.endswith("MANIFEST.json")]
+              assert len(manifests) == 1, "Source manifest missing or ambiguous"
+              manifest = json.loads(z.read(manifests[0]))
+              assert str(manifest["Qt_PySide_version"]) == "6.11.0", "Sources do not match Qt"
+              assert set(manifest["bundled_qt_dlls"]) == bundled, "Bundled Qt DLL manifest mismatch"
+              assert {"qtbase", "pyside-setup"} <= {s["module"] for s in manifest["sources"]}
+              for entry in manifest["sources"]:
+                  matched = [n for n in z.namelist() if n.endswith("/" + entry["filename"]) or n == entry["filename"]]
+                  assert len(matched) == 1, f"Missing source: {entry['filename']}"
+                  digest = hashlib.sha256()
+                  with z.open(matched[0]) as f:
+                      while True:
+                          part = f.read(1024 * 1024)
+                          if not part:
+                              break
+                          digest.update(part)
+                  assert digest.hexdigest() == entry["sha256"], f"Source checksum mismatch: {entry['filename']}"
+          print("Packaging validation passed: ten Windows apps and corresponding versioned source archives.")
+          PY
+
+      - name: Prepare updated v1.0.0 release notes
+        shell: bash
+        run: |
+          cat > RELEASE_NOTES.md <<'EOF'
+          # Landscape Generator Parallax v1.0.0
+
+          Free open-source procedural landscape generator for 2D games and creative projects.
+
+          Features: mountains and city skylines, 24 customizable layers, animated parallax, seed-based generation, PNG exports, and ten languages.
+
+          ## Downloads
+
+          - **Landscape-Generator-Desktop-Windows.zip** — Portable Windows desktop app. Extract the entire ZIP, then launch `Landscape-Generator-Launcher.exe`. Keep the `_internal` and `apps` folders together.
+          - **Landscape-Generator-Qt-LGPL-Sources.zip** — Version-matched source archive for Qt/PySide6/Shiboken used by the Windows package, with manifest and SHA-256 hashes.
+          - **Landscape-Generator-Web.zip** — Portable web version: extract and open `index.html` in a browser.
+
+          **Online version:** https://raulcamaracarreon.github.io/Landscape-Generator-Parallax/web/
+
+          **Licensing:** The application code is MIT-licensed. The Windows distribution bundles separate components with their own licenses, including Qt/PySide6 under LGPL/GPL terms; see `THIRD_PARTY_NOTICES.md` in the ZIP. Automated packaging verification is not a legal certification.
+          EOF
+
+      - name: Attach Windows and source ZIPs to the existing v1.0.0 release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.0
+          name: Landscape Generator Parallax v1.0.0
+          body_path: RELEASE_NOTES.md
+          fail_on_unmatched_files: true
+          files: |
+            downloaded/desktop/Landscape-Generator-Desktop-Windows.zip
+            downloaded/sources/Landscape-Generator-Qt-LGPL-Sources.zip
