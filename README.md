@@ -17,6 +17,21 @@ No installation required / No requiere instalación.
 - Export a composite PNG/JPEG or separate transparent PNG layers.
 - Horizontally continuous mountain silhouettes for repeating backgrounds.
 
+## Downloads / Descargas
+
+Two independent packages are produced by the [Windows packaging workflow](.github/workflows/package-releases.yml):
+
+| Package | Contents | Requirements |
+| --- | --- | --- |
+| **Desktop for Windows** — `Landscape-Generator-Desktop-Windows.zip` | Language selector and ten standalone Windows executables | Windows 10/11; no Python installation |
+| **Portable web app** — `Landscape-Generator-Web.zip` | `index.html`, `i18n.js`, instructions | Modern web browser; works offline |
+
+**[View GitHub Releases / Ver versiones y descargas](https://github.com/raulcamaracarreon/Landscape-Generator-Parallax/releases)**
+
+To build the ZIP archives, open **Actions → Package Desktop and Web → Run workflow**. The resulting packages appear in that run's Artifacts section. To publish downloadable release assets, create and push a version tag such as `v1.0.0`; the workflow packages both editions and publishes the ZIP files as release assets after the build succeeds.
+
+**Build status:** The workflow has been configured but the Windows binaries are not yet verified. A GitHub Release will not appear until a successful tagged run completes.
+
 ## Run from source
 
 Requires Python 3.10+.
