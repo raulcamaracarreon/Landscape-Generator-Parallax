@@ -36,7 +36,7 @@ class Launcher(QWidget):
     def launch(self, filename):
         # Check next to the launcher first; support both compiled programs and source.
         base = Path(sys.executable).resolve().parent if getattr(sys, "frozen", False) else Path(__file__).resolve().parent
-        candidates = [base / (filename + ".exe"), base / "src" / (filename + ".py"), base / (filename + ".py")]
+        candidates = [base / "apps" / filename / (filename + ".exe"), base / (filename + ".exe"), base / "src" / (filename + ".py"), base / (filename + ".py")]
         target = next((p for p in candidates if p.is_file()), None)
         if target is None:
             QMessageBox.warning(self, "File not found / Archivo no encontrado",
