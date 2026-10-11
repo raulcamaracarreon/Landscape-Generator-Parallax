@@ -1,0 +1,42 @@
+name: Audit published LGPL archives (no recompilation)
+
+on:
+  push:
+    branches:
+      - audit/v1-lgpl-inventory
+
+permissions:
+  contents: read
+
+jobs:
+  check-published-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out read-only audit script
+        uses: actions/checkout@v4
+      - name: Download the two actual published ZIP assets
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p release_audit
+          gh release download v1.0.0 --pattern 'Landscape-Generator-Desktop-Windows.zip' --dir release_audit
+          gh release download v1.0.0 --pattern 'Landscape-Generator-Qt-LGPL-Sources.zip' --dir release_audit
+      - name: Audit binary inventory, source hashes and license notices
+        shell: bash
+        run: python scripts/audit_release_v1.py
+      - name: Report findings
+        if: always()
+        shell: bash
+        run: |
+          if [ -f release_audit/SUMMARY.md ]; then cat release_audit/SUMMARY.md >> "$GITHUB_STEP_SUMMARY"; fi
+      - name: Preserve audit JSON
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lgpl-v1-audit
+          path: |
+            release_audit/audit_v1.json
+            release_audit/SUMMARY.md
+          if-no-files-found: ignore
