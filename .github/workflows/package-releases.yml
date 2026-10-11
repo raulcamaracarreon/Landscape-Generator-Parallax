@@ -119,7 +119,7 @@ jobs:
           files: release/Landscape-Generator-Web.zip
 
       - name: Publish desktop and corresponding LGPL sources to v1.0.0
-        if: (github.event_name == 'workflow_dispatch' && inputs.publish_windows) || github.ref == 'refs/heads/main'
+        if: github.event_name == 'workflow_dispatch' && inputs.publish_windows
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.0
